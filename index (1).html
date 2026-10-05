@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-anim="full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprout — Smart Expense Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Poppins:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- FLOATING BACKGROUND BLOBS -->
+<div class="bg-blobs" aria-hidden="true">
+  <span class="blob blob-1"></span>
+  <span class="blob blob-2"></span>
+  <span class="blob blob-3"></span>
+</div>
+
+<!-- ================= LOGIN GATE ================= -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark">S</span>
+      <span class="brand-name">Sprout</span>
+    </div>
+    <div id="auth-login">
+      <h1>Welcome back</h1>
+      <p class="subtle">Log in to see where your money's been going.</p>
+      <form id="login-form">
+        <label class="field"><span>Email</span><input type="email" placeholder="you@example.com" required></label>
+        <label class="field"><span>Password</span><input type="password" placeholder="••••••••" required></label>
+        <button class="btn btn-primary btn-full" type="submit">Log in</button>
+      </form>
+      <p class="auth-switch">New here? <button id="show-signup" class="link-btn">Create an account</button></p>
+      <button id="guest-btn" class="btn btn-outline btn-full">Continue as guest</button>
+    </div>
+    <div id="auth-signup" hidden>
+      <h1>Create your account</h1>
+      <p class="subtle">Takes less than a minute.</p>
+      <form id="signup-form">
+        <label class="field"><span>Name</span><input type="text" placeholder="Your name" required></label>
+        <label class="field"><span>Email</span><input type="email" placeholder="you@example.com" required></label>
+        <label class="field"><span>Password</span><input type="password" placeholder="••••••••" required></label>
+        <button class="btn btn-primary btn-full" type="submit">Sign up</button>
+      </form>
+      <p class="auth-switch">Already have an account? <button id="show-login" class="link-btn">Log in</button></p>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app-shell" class="app-shell" hidden>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">S</span>
+      <span class="brand-name">Sprout</span>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard"><span class="nav-ico">🏠</span> Dashboard</button>
+      <button class="nav-item" data-view="expenses"><span class="nav-ico">🧾</span> Expenses</button>
+      <button class="nav-item" data-view="budget"><span class="nav-ico">🎯</span> Budget</button>
+      <button class="nav-item" data-view="analytics"><span class="nav-ico">📊</span> Analytics</button>
+      <button class="nav-item" data-view="goals"><span class="nav-ico">🏆</span> Goals</button>
+      <button class="nav-item" data-view="reminders"><span class="nav-ico">🔔</span> Reminders <span id="alert-badge" class="badge" hidden>0</span></button>
+      <button class="nav-item" data-view="settings"><span class="nav-ico">⚙️</span> Settings</button>
+    </nav>
+
+    <button class="nav-item admin-link" data-view="admin"><span class="nav-ico">🛠</span> Admin preview</button>
+
+    <div class="sidebar-profile">
+      <div class="avatar">G</div>
+      <div>
+        <div class="profile-name" id="profile-name">Guest</div>
+        <button id="logout-btn" class="link-btn small">Log out</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-area">
+
+    <header class="topbar">
+      <div>
+        <h1 id="greeting">Good evening</h1>
+        <p class="subtle" id="today-date"></p>
+      </div>
+      <button class="btn btn-primary" id="open-add-modal">+ Add expense</button>
+    </header>
+
+    <div id="view-root">
+
+      <!-- ---------- DASHBOARD ---------- -->
+      <section class="view" data-view="dashboard">
+        <div class="status-banner" id="status-banner"></div>
+
+        <div class="cards-row">
+          <div class="stat-card">
+            <span class="stat-icon icon-green">💰</span>
+            <div><span class="stat-label">Total balance</span><div class="stat-value" data-count id="stat-balance">₹0</div></div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon icon-mint">↓</span>
+            <div><span class="stat-label">Total income</span><div class="stat-value" data-count id="stat-income">₹0</div></div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon icon-orange">↑</span>
+            <div><span class="stat-label">Total expenses</span><div class="stat-value" data-count id="stat-expense">₹0</div></div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon icon-tan">🎯</span>
+            <div><span class="stat-label">Remaining budget</span><div class="stat-value" data-count id="stat-remaining">₹0</div></div>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-head"><h3>Spending this week</h3></div>
+            <div id="weekly-chart" class="weekly-chart"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Where it goes</h3></div>
+            <div class="donut-wrap">
+              <svg id="donut-chart" viewBox="0 0 120 120" class="donut"></svg>
+              <div class="donut-center">
+                <span id="donut-total">₹0</span>
+                <span class="subtle small">this month</span>
+              </div>
+            </div>
+            <div id="donut-legend" class="donut-legend"></div>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-head"><h3>Recent transactions</h3><button class="link-btn" data-goto="expenses">View all</button></div>
+            <div id="recent-tx" class="tx-list"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Budget progress</h3></div>
+            <div class="ring-wrap">
+              <svg viewBox="0 0 100 100" class="ring"><circle class="ring-track" cx="50" cy="50" r="42"/><circle id="ring-fill" class="ring-fill" cx="50" cy="50" r="42"/></svg>
+              <div class="ring-center"><span id="ring-pct">0%</span><span class="subtle small">used</span></div>
+            </div>
+            <div class="panel-head budget-head"><h3>Goals</h3><button class="link-btn" data-goto="goals">View all</button></div>
+            <div id="mini-goals"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- EXPENSES ---------- -->
+      <section class="view" data-view="expenses" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>All transactions</h3>
+            <select id="filter-category" class="select-mini"><option value="all">All categories</option></select>
+          </div>
+          <div id="expense-list" class="tx-list tall"></div>
+          <p class="empty-note" id="expense-empty">No expenses yet — your spending story starts here ✨</p>
+        </div>
+      </section>
+
+      <!-- ---------- BUDGET ---------- -->
+      <section class="view" data-view="budget" hidden>
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-head"><h3>Monthly budget</h3></div>
+            <div class="budget-set">
+              <span class="rupee-prefix">₹</span>
+              <input type="number" id="monthly-budget-input" placeholder="e.g. 15000" min="0">
+              <button class="btn btn-outline" id="save-monthly-budget">Save</button>
+            </div>
+            <div class="ring-wrap" style="margin-top:20px">
+              <svg viewBox="0 0 100 100" class="ring"><circle class="ring-track" cx="50" cy="50" r="42"/><circle id="budget-ring-fill" class="ring-fill" cx="50" cy="50" r="42"/></svg>
+              <div class="ring-center"><span id="budget-ring-pct">0%</span><span class="subtle small">used</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Category budgets</h3></div>
+            <div id="category-budgets"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- ANALYTICS ---------- -->
+      <section class="view" data-view="analytics" hidden>
+        <div class="personality-card" id="personality-card">
+          <span class="personality-emoji">🧠</span>
+          <div>
+            <span class="subtle small">Your money personality</span>
+            <div class="personality-title" id="personality-title">The Balanced Spender</div>
+            <p class="subtle" id="personality-desc"></p>
+          </div>
+        </div>
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Spending trend</h3>
+              <div class="toggle-pill">
+                <button class="pill-btn active" data-range="week">Week</button>
+                <button class="pill-btn" data-range="month">Month</button>
+              </div>
+            </div>
+            <div id="trend-chart" class="weekly-chart"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Category comparison</h3></div>
+            <div id="category-compare" class="cat-breakdown"></div>
+          </div>
+        </div>
+        <div class="cards-row">
+          <div class="stat-card"><span class="stat-icon icon-orange">🔥</span><div><span class="stat-label">Highest category</span><div class="stat-value" id="an-highest">—</div></div></div>
+          <div class="stat-card"><span class="stat-icon icon-mint">📈</span><div><span class="stat-label">Savings rate</span><div class="stat-value" id="an-savings">0%</div></div></div>
+          <div class="stat-card"><span class="stat-icon icon-tan">📐</span><div><span class="stat-label">Budget utilisation</span><div class="stat-value" id="an-util">0%</div></div></div>
+        </div>
+      </section>
+
+      <!-- ---------- GOALS ---------- -->
+      <section class="view" data-view="goals" hidden>
+        <div class="panel-head" style="margin-bottom:14px">
+          <h3>Your goals</h3>
+          <button class="btn btn-primary" id="open-goal-modal">+ New goal</button>
+        </div>
+        <div id="goals-grid" class="goals-grid"></div>
+        <p class="empty-note" id="goals-empty">No goals yet — give your money something to work toward.</p>
+      </section>
+
+      <!-- ---------- REMINDERS / ALERTS ---------- -->
+      <section class="view" data-view="reminders" hidden>
+        <div class="panel-head" style="margin-bottom:14px">
+          <h3>Smart alerts &amp; reminders</h3>
+          <button class="btn btn-outline" id="open-reminder-modal">+ Add reminder</button>
+        </div>
+        <div id="alerts-list" class="alerts-list"></div>
+        <p class="empty-note" id="alerts-empty">No alerts — you're doing great! Nothing needs your attention.</p>
+      </section>
+
+      <!-- ---------- SETTINGS ---------- -->
+      <section class="view" data-view="settings" hidden>
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-head"><h3>Appearance</h3></div>
+            <div class="option-row" id="appearance-options">
+              <button class="option-chip active" data-mode="light">☀️ Light</button>
+              <button class="option-chip" data-mode="dark">🌙 Dark</button>
+              <button class="option-chip" data-mode="system">🖥 System</button>
+            </div>
+
+            <div class="panel-head budget-head"><h3>Font</h3></div>
+            <div class="option-row wrap" id="font-options">
+              <button class="option-chip" data-font="'Space Grotesk', sans-serif">Space Grotesk</button>
+              <button class="option-chip" data-font="'Manrope', sans-serif">Manrope</button>
+              <button class="option-chip" data-font="'Inter', sans-serif">Inter</button>
+              <button class="option-chip" data-font="'Poppins', sans-serif">Poppins</button>
+              <button class="option-chip" data-font="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</button>
+              <button class="option-chip" data-font="'DM Sans', sans-serif">DM Sans</button>
+            </div>
+
+            <div class="panel-head budget-head"><h3>Animation</h3></div>
+            <div class="option-row" id="animation-options">
+              <button class="option-chip active" data-anim="full">Full</button>
+              <button class="option-chip" data-anim="reduced">Reduced</button>
+              <button class="option-chip" data-anim="off">Off</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Notifications</h3></div>
+            <label class="switch-row"><span>Budget alerts</span><input type="checkbox" checked data-notif="budget"></label>
+            <label class="switch-row"><span>Expense reminders</span><input type="checkbox" checked data-notif="expense"></label>
+            <label class="switch-row"><span>Upcoming bills</span><input type="checkbox" checked data-notif="bills"></label>
+            <label class="switch-row"><span>Weekly reports</span><input type="checkbox" data-notif="weekly"></label>
+            <label class="switch-row"><span>Unusual spending</span><input type="checkbox" checked data-notif="unusual"></label>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- ADMIN PREVIEW ---------- -->
+      <section class="view" data-view="admin" hidden>
+        <div class="admin-banner">Admin preview — sample data shown for demonstration only.</div>
+        <div class="cards-row">
+          <div class="stat-card"><span class="stat-icon icon-green">👥</span><div><span class="stat-label">Total users</span><div class="stat-value">1,248</div></div></div>
+          <div class="stat-card"><span class="stat-icon icon-mint">🟢</span><div><span class="stat-label">Active users</span><div class="stat-value">812</div></div></div>
+          <div class="stat-card"><span class="stat-icon icon-orange">🧾</span><div><span class="stat-label">Transactions</span><div class="stat-value">34,502</div></div></div>
+          <div class="stat-card"><span class="stat-icon icon-tan">💵</span><div><span class="stat-label">Expense volume</span><div class="stat-value">₹52.3L</div></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Users</h3></div>
+          <table class="admin-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Transactions</th><th>Status</th></tr></thead>
+            <tbody id="admin-users"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <button class="fab-mobile" id="fab-add">+</button>
+
+  <nav class="bottom-nav">
+    <button class="bn-item active" data-view="dashboard">🏠</button>
+    <button class="bn-item" data-view="expenses">🧾</button>
+    <button class="bn-item" data-view="budget">🎯</button>
+    <button class="bn-item" data-view="analytics">📊</button>
+    <button class="bn-item" data-view="settings">⚙️</button>
+  </nav>
+</div>
+
+<!-- ================= LOADING OVERLAY ================= -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-blob">🪴</div>
+  <p id="loading-text">Getting things ready…</p>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<!-- ================= TOASTS ================= -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ================= ADD EXPENSE MODAL ================= -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3>Add expense</h3><button class="modal-close" id="close-modal">&times;</button></div>
+    <form id="tx-form">
+      <div class="type-toggle">
+        <button type="button" class="type-btn active" data-type="expense">Expense</button>
+        <button type="button" class="type-btn" data-type="income">Income</button>
+      </div>
+      <label class="field"><span>Amount (₹)</span><input type="number" id="tx-amount" min="1" required></label>
+      <label class="field"><span>Description</span><input type="text" id="tx-title" placeholder="e.g. Coffee with friends" required></label>
+      <label class="field"><span>Category</span>
+        <select id="tx-category">
+          <option value="Food">🍔 Food</option>
+          <option value="Transport">🚗 Transport</option>
+          <option value="Shopping">🛍 Shopping</option>
+          <option value="Entertainment">🎮 Entertainment</option>
+          <option value="Education">📚 Education</option>
+          <option value="Health">💊 Health</option>
+          <option value="Bills">🏠 Bills</option>
+          <option value="Travel">✈ Travel</option>
+          <option value="Subscriptions">💻 Subscriptions</option>
+          <option value="Other">💰 Other</option>
+        </select>
+      </label>
+      <label class="field"><span>Payment method</span>
+        <select id="tx-payment"><option>UPI</option><option>Card</option><option>Cash</option><option>Net banking</option></select>
+      </label>
+      <label class="field"><span>Date</span><input type="date" id="tx-date" required></label>
+      <label class="field"><span>Receipt (optional)</span><input type="file" id="tx-receipt" accept="image/*"></label>
+      <button type="submit" class="btn btn-primary btn-full">Save transaction</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= GOAL MODAL ================= -->
+<div class="modal-overlay" id="goal-modal-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3>New goal</h3><button class="modal-close" id="close-goal-modal">&times;</button></div>
+    <form id="goal-form">
+      <label class="field"><span>Goal name</span>
+        <select id="goal-name">
+          <option>New phone</option><option>Laptop</option><option>Trip</option>
+          <option>Emergency fund</option><option>Shopping</option><option>Education</option><option>Custom</option>
+        </select>
+      </label>
+      <label class="field" id="goal-custom-wrap" hidden><span>Custom name</span><input type="text" id="goal-custom-name"></label>
+      <label class="field"><span>Target amount (₹)</span><input type="number" id="goal-target" min="1" required></label>
+      <label class="field"><span>Already saved (₹)</span><input type="number" id="goal-saved" min="0" value="0"></label>
+      <label class="field"><span>Target date</span><input type="date" id="goal-date"></label>
+      <button type="submit" class="btn btn-primary btn-full">Create goal</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= REMINDER MODAL ================= -->
+<div class="modal-overlay" id="reminder-modal-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3>Add reminder</h3><button class="modal-close" id="close-reminder-modal">&times;</button></div>
+    <form id="reminder-form">
+      <label class="field"><span>Title</span><input type="text" id="reminder-title" placeholder="e.g. Netflix renewal" required></label>
+      <label class="field"><span>Type</span>
+        <select id="reminder-type"><option value="bill">Upcoming bill</option><option value="subscription">Subscription renewal</option></select>
+      </label>
+      <label class="field"><span>Amount (₹)</span><input type="number" id="reminder-amount" min="0"></label>
+      <label class="field"><span>Date</span><input type="date" id="reminder-date" required></label>
+      <button type="submit" class="btn btn-primary btn-full">Save reminder</button>
+    </form>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
